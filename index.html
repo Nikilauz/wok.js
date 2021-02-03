@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>wok</title>
+    <style>
+        * {
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+        }
+    </style>
+    <script src="wok.js"></script>
+</head>
+
+<body>
+    <div id="login">
+        <form id="loginForm">
+            <input name="username" placeholder="username" required>
+            <input name="password" type="password" placeholder="password" required>
+            <input id="loginButton" type="submit" value="submit">
+            <span id="accountMessage">submit the same credentials again to create account</span>
+        </form>
+    </div>
+    <div id="cookbook">
+        <select id="recipes"></select>
+        <form id="addRecipeForm" style="display: inline-block;">
+            <input>
+            <input type="submit" value="+">
+        </form>
+        <button id="cookButton">cook</button>
+        <button id="addButton">add ingredients</button>
+        <form id="addForm">
+            <input>
+            <input>
+            <span style="white-space: nowrap;">
+                <input type="submit" value="add">
+                <input type="submit" value="save">
+                <input type="checkbox" id="textarea">
+                <label for="textarea">textarea</label>
+            </span>
+            <br>
+            <textarea id="addList" placeholder="expression;expression&#10;expression;expression&#10;..."></textarea>
+        </form>
+    </div>
+    <div id="kitchen">
+        <p id="ingredient"></p>
+        <form id="answerForm">
+            <input name="answer" autocomplete="off">
+            <input id="answerButton" type="submit" value="submit">
+        </form>
+        <p id="progress"></p>
+        <button id="serveButton">serve the dish</button>
+    </div>
+    <div style="position: absolute;bottom: 0; padding: 20px;"><a href="https://ocr.space/">https://ocr.space/</a>:
+        update is coming...</div>
+    <script>
+        const wok = new Wok()
+    </script>
+</body>
+
+</html>
