@@ -2,6 +2,7 @@ class Wok {
     constructor() {
         this.ui = new UI(this)
         this.cookbook = {}
+        this.recipeEdited = false
         this.recipe = undefined
         this.userFormData = null
         this.chef = { cursor: 0, progress: 0 }
@@ -111,32 +112,41 @@ class Wok {
 
     addIngredient(submitter, newPairs) {
         const ingredients = this.cookbook[this.recipe]["ingredients"]
-        if (submitter === "add") {
-            let added = false
+        newPairs.forEach(newPair => {
+            let pairFound = false
+            if (!newPair[0] || !newPair[1]) {
+                return
+            }
             ingredients.forEach((ingredient, i) => {
                 ingredient.forEach((set, j) => {
                     newPair.forEach((element, k) => {
                         if (set.includes(element)) {
-                            added = true
+                            pairFound = true
                             if (!ingredient[Number(!j)].includes(newPair[Number(!k)])) {
                                 ingredients[i][Number(!j)].push(newPair[Number(!k)])
+                                this.recipeEdited = true
                             }
                         }
                     })
                 })
             })
-            if (!added) {
+            if (!pairFound) {
                 ingredients.push([[newPair[0]], [newPair[1]]])
             }
-            this.ui.setAddFormActive(true)
-        } else if (submitter === "save") {
-            this.userFormData.append("save", this.recipe)
-            this.userFormData.append("ingredients", JSON.stringify(ingredients))
-            fetch("wok.php", { method: "post", body: this.userFormData }).then(r => this.fillCookbook())
-            this.userFormData.delete("save")
-            this.userFormData.delete("ingredients")
-            this.ui.setAddFormActive(false)
+        })
+        if (submitter === "save") {
+            if (this.recipeEdited) {
+                this.recipeEdited = false
+                this.userFormData.append("save", this.recipe)
+                this.userFormData.append("ingredients", JSON.stringify(ingredients))
+                fetch("wok.php", { method: "post", body: this.userFormData }).then(r => this.fillCookbook())
+                this.userFormData.delete("save")
+                this.userFormData.delete("ingredients")
+            } else {
+                this.fillCookbook()
+            }
         }
+        this.ui.setAddFormActive(submitter === "add")
     }
 
     newRecipe(name) {
@@ -166,23 +176,25 @@ class UI {
         this.nodes =
         {
             login: document.getElementById("login"),
-            cookbook: document.getElementById("cookbook"),
-            recipes: document.getElementById("recipes"),
-            progress: document.getElementById("progress"),
-            kitchen: document.getElementById("kitchen"),
-            ingredient: document.getElementById("ingredient"),
-            cookButton: document.getElementById("cookButton"),
             loginForm: document.getElementById("loginForm"),
             username: loginForm["username"],
             password: loginForm["password"],
             loginButton: document.getElementById("loginButton"),
             accountMessage: document.getElementById("accountMessage"),
+            cookbook: document.getElementById("cookbook"),
+            recipes: document.getElementById("recipes"),
+            addRecipeForm: document.getElementById("addRecipeForm"),
+            cookButton: document.getElementById("cookButton"),
+            addIngredientsButton: document.getElementById("addIngredientsButton"),
+            addIngredientsForm: document.getElementById("addIngredientsForm"),
+            textareaSwitch: document.getElementById("textarea"),
+            addIngredientsList: document.getElementById("addIngredientsList"),
+            kitchen: document.getElementById("kitchen"),
+            ingredient: document.getElementById("ingredient"),
             answerForm: document.getElementById("answerForm"),
             answerButton: document.getElementById("answerButton"),
+            progress: document.getElementById("progress"),
             serveButton: document.getElementById("serveButton"),
-            addButton: document.getElementById("addButton"),
-            addForm: document.getElementById("addForm"),
-            addRecipeForm: document.getElementById("addRecipeForm")
         }
 
         this.wok = wok
@@ -199,12 +211,13 @@ class UI {
         this.nodes.loginButton.onclick = this.onLoginRequested()
         this.nodes.answerButton.onclick = this.onAnswer()
         this.nodes.serveButton.onclick = () => this.wok.serve()
-        this.nodes.addButton.onclick = () => this.setAddFormActive(true)
+        this.nodes.addIngredientsButton.onclick = () => this.setAddFormActive(true)
+        this.nodes.textareaSwitch.onchange = () => this.toggleTextarea()
         this.nodes.addRecipeForm[1].onclick = e => { this.onAddRecipe(e) }
 
         this.setAddFormActive(false)
         this.setAddRecipeFormActive(true)
-        this.nodes.addForm.onsubmit = e => { this.onAdd(e) }
+        this.nodes.addIngredientsForm.onsubmit = e => { this.onAdd(e) }
 
         this.resetLoginForm()
     }
@@ -242,20 +255,20 @@ class UI {
 
     showKitchen() {
         this.nodes.kitchen.hidden = false
-        this.setKitchenDisable(true)
+        this.setCookbookDisbabled(true)
         this.nodes.answerForm.reset()
     }
 
     serve() {
         alert("The chef is " + this.nodes.progress.innerHTML + " satisfied!")
         this.nodes.kitchen.hidden = true
-        this.setKitchenDisable(false)
+        this.setCookbookDisbabled(false)
     }
 
-    setKitchenDisable(value) {
+    setCookbookDisbabled(value) {
         this.nodes.recipes.disabled = value
         this.nodes.cookButton.disabled = value
-        this.nodes.addButton.disabled = value
+        this.nodes.addIngredientsButton.disabled = value
         this.setAddRecipeFormActive(!value)
     }
 
@@ -275,7 +288,16 @@ class UI {
 
     onAdd(e) {
         e.preventDefault()
-        this.wok.addIngredient(e.submitter.value, [this.nodes.addForm[0].value, this.nodes.addForm[1].value])
+        const ingredients = []
+        if (this.nodes.textareaSwitch.checked) {
+            this.nodes.addIngredientsList.value.match(/(.+;.+\r?\n)*(.+;.+)/g)[0]
+                .split(/\r?\n/).forEach(i => {
+                    ingredients.push(i.split(";", 2))
+                })
+        } else {
+            ingredients.push([this.nodes.addIngredientsForm[0].value, this.nodes.addIngredientsForm[1].value])
+        }
+        this.wok.addIngredient(e.submitter.value, ingredients)
     }
 
     onAddRecipe(e) {
@@ -297,6 +319,14 @@ class UI {
         this.resetLoginForm()
     }
 
+    toggleTextarea(value) {
+        if (value === undefined) {
+            value = this.nodes.textareaSwitch.checked
+        }
+        this.nodes.addIngredientsList.hidden = this.nodes.addIngredientsList.disabled = !value
+        this.nodes.addIngredientsForm[0].disabled = this.nodes.addIngredientsForm[1].disabled = value
+    }
+
     resetLoginForm() {
         this.nodes.loginForm.reset()
         this.nodes.username.focus()
@@ -306,13 +336,15 @@ class UI {
         if (value && !this.nodes.recipes.value) {
             return
         }
-        this.nodes.addButton.disabled = value
-        this.nodes.addForm.hidden = !value
+        this.nodes.addIngredientsButton.disabled = value
+        this.nodes.addIngredientsForm.hidden = !value
         this.nodes.cookButton.disabled = value
+        this.nodes.recipes.disabled = value
         this.setAddRecipeFormActive(!value)
+        this.toggleTextarea(false)
         if (value) {
-            this.nodes.addForm.reset()
-            this.nodes.addForm[0].focus()
+            this.nodes.addIngredientsForm.reset()
+            this.nodes.addIngredientsForm[0].focus()
         }
     }
 
