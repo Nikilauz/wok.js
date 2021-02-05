@@ -1,3 +1,17 @@
+function randomElement(array) {
+    return array[Math.floor(Math.random() * array.length)]
+}
+
+function formDataToString(fd) {
+    JSON.stringify(fd && [...fd.entries()])
+}
+
+function hash(message) {
+    const hasher = new jsSHA("SHA-1", "TEXT", { encoding: "UTF8" })
+    hasher.update(message)
+    return hasher.getHash("HEX")
+}
+
 class Wok {
     constructor() {
         this.ui = new UI(this)
@@ -162,15 +176,7 @@ class Wok {
     }
 }
 
-function randomElement(array) {
-    return array[Math.floor(Math.random() * array.length)]
-}
-
-function formDataToString(fd) {
-    JSON.stringify(fd && [...fd.entries()])
-}
-
-class Cooker { }
+class Cooker { /* TODO */ }
 
 class UI {
     constructor(wok) {
@@ -277,9 +283,7 @@ class UI {
         return event => {
             event.preventDefault()
             const data = new FormData(this.nodes.loginForm)
-            const hasher = jsSHA("SHA-1", "TEXT", { encoding: "UTF8" })
-            hasher.update(data.get("password"))
-            data.set("password", hasher.getHash("HEX"))
+            data.set("password", hash(data.get("password")))
             this.wok.requestLogin(data)
         }
     }
