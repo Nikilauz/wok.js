@@ -276,7 +276,11 @@ class UI {
     onLoginRequested() {
         return event => {
             event.preventDefault()
-            this.wok.requestLogin(new FormData(this.nodes.loginForm))
+            const data = new FormData(this.nodes.loginForm)
+            const hasher = jsSHA("SHA-1", "TEXT", { encoding: "UTF8" })
+            hasher.update(data.get("password"))
+            data.set("password", hasher.getHash("HEX"))
+            this.wok.requestLogin(data)
         }
     }
 
