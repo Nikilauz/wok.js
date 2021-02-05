@@ -1,6 +1,5 @@
  - onleave
  - text recognition?
- - csv
  - design
  - remove ingredients/recipe
  - reset score
