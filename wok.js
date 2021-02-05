@@ -132,6 +132,7 @@ class Wok {
             })
             if (!pairFound) {
                 ingredients.push([[newPair[0]], [newPair[1]]])
+                this.recipeEdited = true
             }
         })
         if (submitter === "save") {
