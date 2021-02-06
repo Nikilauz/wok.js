@@ -255,11 +255,12 @@ class UI {
         this.nodes.serveButton.onclick = () => this.wok.serve()
         this.nodes.addIngredientsButton.onclick = () => this.setAddFormActive(true)
         this.nodes.textareaSwitch.onchange = () => this.toggleTextarea()
-        this.nodes.addRecipeForm[1].onclick = e => { this.onAddRecipe(e) }
+        this.nodes.addRecipeForm[1].onclick = e => this.onAddRecipe(e)
+        this.nodes.addIngredientsForm.onsubmit = e => this.onAdd(e)
 
         this.setAddFormActive(false)
         this.setAddRecipeFormActive(true)
-        this.nodes.addIngredientsForm.onsubmit = e => { this.onAdd(e) }
+
         this.nodes.addIngredientsList.ondragenter =
             this.nodes.addIngredientsList.ondragleave =
             this.nodes.addIngredientsList.ondragend = e => this.onDragChange(e)

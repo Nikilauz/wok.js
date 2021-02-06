@@ -1,6 +1,6 @@
- - text recognition
  - design
  - show recipe
  - edit/remove ingredients/recipe
  - reset score
  - change password
+ - comments
