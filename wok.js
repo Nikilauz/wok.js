@@ -131,6 +131,32 @@ class Wok {
         return Number(this.cookbook[recipe || this.recipe]["score"][this.userFormData.get("username")] || 0)
     }
 
+    handleFile(files) {
+        const url = "https://api.ocr.space/parse/image";
+        [...files].forEach((file, index, array) => {
+            if (file.size >= 1e6) {
+                this.ui.addTextareaContent("file '" + file.name + "' too big: maximum is 1MB", index / array.length)
+                return
+            }
+            const fr = new FileReader()
+            fr.onload = e => {
+                const data = new FormData()
+                data.set("apikey", "4538775cb388957")
+                data.set("base64Image", e.target.result)
+                data.set("detectOrientation", "true")
+                data.set("scale", "true")
+                data.set("isTable", "true")
+                fetch(url, { method: "post", body: data }).then(res => {
+                    res.json().then(json => {
+                        const result = json.ErrorMessage ? json.ErrorMessage : json.ParsedResults[0].ParsedText
+                        this.ui.addTextareaContent(result, index / array.length)
+                    })
+                })
+            }
+            fr.readAsDataURL(file)
+        })
+    }
+
     addIngredient(submitter, newPairs) {
         const ingredients = this.cookbook[this.recipe]["ingredients"]
         newPairs.forEach(newPair => {
@@ -213,6 +239,8 @@ class UI {
 
         this.wok = wok
 
+        this.intervalStorage = undefined
+
         this.nodes.login.hidden = false
         this.nodes.kitchen.hidden = true
         this.nodes.cookbook.hidden = true
@@ -232,6 +260,11 @@ class UI {
         this.setAddFormActive(false)
         this.setAddRecipeFormActive(true)
         this.nodes.addIngredientsForm.onsubmit = e => { this.onAdd(e) }
+        this.nodes.addIngredientsList.ondragenter =
+            this.nodes.addIngredientsList.ondragleave =
+            this.nodes.addIngredientsList.ondragend = e => this.onDragChange(e)
+        this.nodes.addIngredientsList.ondragover = e => this.onDrag(e)
+        this.nodes.addIngredientsList.ondrop = e => this.onDrop(e)
 
         this.resetLoginForm()
     }
@@ -321,6 +354,26 @@ class UI {
         this.wok.newRecipe(this.nodes.addRecipeForm[0].value)
     }
 
+    onDrag(e) {
+        e.stopPropagation()
+        e.preventDefault()
+    }
+
+    onDragChange(e) {
+        this.onDrag(e)
+        this.switchBorderStyle(this.nodes.addIngredientsList)
+    }
+
+    onDrop(e) {
+        this.onDragChange(e)
+        this.setTextareaLoading(true)
+        this.wok.handleFile(e.dataTransfer.files)
+    }
+
+    switchBorderStyle(el) {
+        el.style.borderStyle == "dashed" ? el.style.borderStyle = "initial" : el.style.borderStyle = "dashed"
+    }
+
     wrongAnswer(string) {
         alert("Oops, the chef is not that happy...\n" + string)
     }
@@ -342,6 +395,26 @@ class UI {
         this.nodes.addIngredientsList.hidden = this.nodes.addIngredientsList.disabled = !value
         this.nodes.addIngredientsForm[0].disabled = this.nodes.addIngredientsForm[1].disabled = value
         this.nodes.textareaSwitch.labels[0].innerHTML = "textarea" + (value ? " ( = image drop zone)" : "");
+    }
+
+    addTextareaContent(content, progress) {
+        const area = this.nodes.addIngredientsList
+        if (content) {
+            area.value += (area.value ? "\n" : "") + content.replace(/\t/g, ";")
+        }
+        this.setTextareaLoading(progress < 1);
+    }
+
+    setTextareaLoading(value) {
+        [...this.nodes.addIngredientsForm].forEach(e => { e.readOnly = value })
+        if (value) {
+            if (this.intervalStorage === undefined) {
+                this.intervalStorage = setInterval(() => { this.switchBorderStyle(this.nodes.addIngredientsList) }, 500)
+            }
+        } else {
+            clearInterval(this.intervalStorage)
+            this.intervalStorage = undefined
+        }
     }
 
     resetLoginForm() {
