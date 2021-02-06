@@ -114,8 +114,15 @@ class Wok {
             data.append("create", "")
         }
         this.userFormData = data
-        this.authenticate(() => { this.ui.showCookbook() },
-            res => { res == null ? this.ui.wrongUsername() : this.ui.wrongPassword() })
+        this.authenticate(
+            () => {
+                window.addEventListener("beforeunload", e => { e.returnValue = true })
+                this.ui.showCookbook()
+            },
+            res => {
+                res == null ? this.ui.wrongUsername() : this.ui.wrongPassword()
+            }
+        )
         this.userFormData.delete("create")
     }
 
@@ -334,6 +341,7 @@ class UI {
         }
         this.nodes.addIngredientsList.hidden = this.nodes.addIngredientsList.disabled = !value
         this.nodes.addIngredientsForm[0].disabled = this.nodes.addIngredientsForm[1].disabled = value
+        this.nodes.textareaSwitch.labels[0].innerHTML = "textarea" + (value ? " ( = image drop zone)" : "");
     }
 
     resetLoginForm() {
