@@ -1,7 +1,6 @@
- - onleave
- - text recognition?
+ - text recognition
  - design
- - remove ingredients/recipe
+ - show recipe
+ - edit/remove ingredients/recipe
  - reset score
  - change password
- - hashed password subscription

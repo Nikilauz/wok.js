@@ -27,9 +27,8 @@ if (isset($_POST["username"]) && isset($_POST["password"])) {
             die("false");
         }
         file_put_contents("cookbook.json", json_encode($cookbook));
-    } else {
-        var_export($valid);
     }
+    var_export($valid);
 }
 
 function createHash($string)
